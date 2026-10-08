@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>レプトン生 診断アプリ | Lepton Student Animal Quiz</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts for Playful Japanese Aesthetics -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Zen Maru Gothic', 'M PLUS Rounded 1c', -apple-system, sans-serif;
+            background: #0b1120;
+            color: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .font-jp-rounded {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .option-card {
+            transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .option-card:active {
+            transform: scale(0.97);
+        }
+
+        .option-card.selected {
+            border-color: #38bdf8;
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.25) 0%, rgba(168, 85, 247, 0.2) 100%);
+            box-shadow: 0 0 18px rgba(56, 189, 248, 0.25);
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #38bdf8, #c084fc, #f43f5e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .safe-bottom {
+            padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(11, 17, 32, 0.9);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(56, 189, 248, 0.4);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="flex flex-col justify-between min-h-screen">
+
+    <header class="w-full border-b border-white/10 glass-panel sticky top-0 z-40 px-4 py-3">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-2.5 cursor-pointer" onclick="resetToLanding()">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-400 to-indigo-600 flex items-center justify-center text-xl shadow-md shadow-sky-500/20 shrink-0">
+                    📖
+                </div>
+                <div>
+                    <h1 class="font-jp-rounded text-base font-extrabold text-white tracking-wide leading-tight">レプトン生 診断</h1>
+                    <p class="text-[10px] text-sky-300 font-bold uppercase tracking-wider">Student Animal Quiz</p>
+                </div>
+            </div>
+
+            <button onclick="toggleAllAnimalsModal()" class="w-10 h-10 rounded-2xl bg-white/10 active:bg-white/20 border border-white/15 text-amber-300 flex items-center justify-center text-base transition" aria-label="全動物一覧を見る">
+                <i class="fa-solid fa-paw"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-md w-full mx-auto px-4 py-4 flex flex-col justify-center">
+
+        <!-- 1. LANDING SCREEN -->
+        <div id="landingScreen" class="space-y-6 text-center my-auto py-2">
+            <div class="space-y-3">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-sky-400/20 text-sky-300 border border-sky-400/30 uppercase tracking-wider">
+                    ✏️ レプトン生 専用タイプ診断 ✏️
+                </span>
+                <h2 class="font-jp-rounded text-2xl md:text-3xl font-black text-white leading-snug">
+                    きみはどの<span class="text-gradient">どうぶつタイプ</span>？🐾
+                </h2>
+                <p class="text-gray-300 text-xs md:text-sm font-medium leading-relaxed px-2">
+                    2ページごとのデスクチェック、iPadでのリスニング、宿題の予習動画… レプトンでの学習スタイルから、きみの「本当のタイプ」を8つの質問で診断するよ！
+                </p>
+            </div>
+
+            <!-- Preview Cards -->
+            <div class="grid grid-cols-2 gap-2 text-left">
+                <div class="glass-card p-3 rounded-2xl border border-white/10 flex items-center space-x-2.5">
+                    <div class="text-2xl shrink-0">🦁</div>
+                    <div class="text-[11px] overflow-hidden">
+                        <div class="font-bold text-amber-300 font-jp-rounded truncate">ギリギリライオン</div>
+                        <div class="text-gray-400 truncate">予習動画は直前にあせる！</div>
+                    </div>
+                </div>
+                <div class="glass-card p-3 rounded-2xl border border-white/10 flex items-center space-x-2.5">
+                    <div class="text-2xl shrink-0">🐧</div>
+                    <div class="text-[11px] overflow-hidden">
+                        <div class="font-bold text-sky-300 font-jp-rounded truncate">パーフェクトペンギン</div>
+                        <div class="text-gray-400 truncate">消しゴム掛けすぎて紙が…</div>
+                    </div>
+                </div>
+                <div class="glass-card p-3 rounded-2xl border border-white/10 flex items-center space-x-2.5">
+                    <div class="text-2xl shrink-0">🦔</div>
+                    <div class="text-[11px] overflow-hidden">
+                        <div class="font-bold text-pink-300 font-jp-rounded truncate">てれやハリネズミ</div>
+                        <div class="text-gray-400 truncate">チェックの時はドキドキ！</div>
+                    </div>
+                </div>
+                <div class="glass-card p-3 rounded-2xl border border-white/10 flex items-center space-x-2.5">
+                    <div class="text-2xl shrink-0">🐆</div>
+                    <div class="text-[11px] overflow-hidden">
+                        <div class="font-bold text-emerald-300 font-jp-rounded truncate">スピードキツネ</div>
+                        <div class="text-gray-400 truncate">2ページ爆速で終わらせる！</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Start Button -->
+            <div class="pt-2">
+                <button onclick="startQuiz()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 via-indigo-600 to-pink-500 active:scale-95 text-white font-jp-rounded font-black text-lg md:text-xl tracking-wide shadow-xl shadow-sky-500/30 transition flex items-center justify-center gap-2 border border-white/20">
+                    <span>診断をはじめる！</span>
+                    <i class="fa-solid fa-play text-amber-300 text-sm"></i>
+                </button>
+                <p class="text-[11px] text-indigo-300 mt-2.5 font-bold">⏱️ 所要時間：約2分 • 全16タイプ</p>
+            </div>
+        </div>
+
+        <!-- 2. QUIZ QUESTION SCREEN -->
+        <div id="quizScreen" class="hidden space-y-4 my-auto">
+            
+            <!-- Progress Bar -->
+            <div class="glass-panel p-3 rounded-2xl space-y-1.5">
+                <div class="flex justify-between items-center text-[11px] font-bold text-indigo-200">
+                    <span id="questionProgressText">質問 1 / 8</span>
+                    <span id="questionPercentText" class="text-amber-300">12%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden p-0.5 border border-white/10">
+                    <div id="progressBar" class="bg-gradient-to-r from-sky-400 via-indigo-500 to-pink-500 h-full rounded-full transition-all duration-300" style="width: 12.5%"></div>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div class="glass-panel p-5 rounded-3xl space-y-4 border border-white/15 shadow-xl relative overflow-hidden">
+                <div class="flex items-center gap-1.5 text-[10px] font-bold text-sky-300 bg-sky-400/10 px-2.5 py-1 rounded-full w-fit border border-sky-400/20">
+                    <i class="fa-solid fa-book-open"></i>
+                    <span id="questionCategory">レプトンの場面</span>
+                </div>
+
+                <h3 id="questionTitle" class="font-jp-rounded text-base md:text-lg font-bold text-white leading-snug">
+                    質問テキストがここに読み込まれます...
+                </h3>
+
+                <!-- Options List -->
+                <div id="optionsContainer" class="space-y-2.5 pt-1">
+                    <!-- Options inserted dynamically -->
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between items-center gap-3 pt-1 safe-bottom">
+                <button id="prevBtn" onclick="prevQuestion()" disabled class="w-1/3 py-3 rounded-2xl bg-white/10 active:bg-white/20 border border-white/10 text-xs font-bold text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-arrow-left text-xs"></i> もどる
+                </button>
+
+                <button id="nextBtn" onclick="nextQuestion()" disabled class="w-2/3 py-3 rounded-2xl bg-sky-600 active:bg-sky-500 text-white text-sm font-black shadow-lg shadow-sky-600/30 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-1.5">
+                    <span>つぎへ</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. RESULT PASSPORT SCREEN -->
+        <div id="resultScreen" class="hidden space-y-5 my-auto pb-6">
+            
+            <!-- Result Passport Card -->
+            <div id="passportCard" class="glass-panel p-5 rounded-3xl border-2 border-sky-400/40 text-center space-y-4 shadow-2xl relative overflow-hidden bg-gradient-to-b from-slate-900/90 to-indigo-950/90">
+                <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-extrabold bg-sky-400/20 text-sky-300 border border-sky-400/30 uppercase tracking-wider">
+                    🏅 Lepton Student Passport 🏅
+                </span>
+
+                <!-- Winner Badge -->
+                <div class="flex flex-col items-center">
+                    <div id="winnerEmoji" class="w-24 h-24 rounded-3xl bg-gradient-to-br from-sky-500/20 via-indigo-600/20 to-pink-400/20 border-2 border-sky-400 flex items-center justify-center text-5xl shadow-xl mb-2.5">
+                        🦁
+                    </div>
+
+                    <h2 id="winnerName" class="font-jp-rounded text-2xl font-black text-white tracking-wide">
+                        ギリギリライオン
+                    </h2>
+
+                    <p id="winnerTagline" class="text-sky-300 font-bold text-xs mt-0.5 leading-snug px-2">
+                        本番に強いスピーチスター！予習動画はいつも直前に確認！
+                    </p>
+
+                    <div id="winnerMatchPercentage" class="mt-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[11px] font-bold">
+                        ⭐ ぴったり度 94%
+                    </div>
+                </div>
+
+                <!-- Realistic Traits Grid -->
+                <div class="space-y-2 pt-3 border-t border-white/10 text-left">
+                    <h4 class="text-[11px] font-extrabold text-sky-300 uppercase tracking-wider text-center flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-face-smile text-sky-400"></i> あるある＆学習の特徴
+                    </h4>
+                    <div id="winnerTraitsGrid" class="space-y-1.5 text-xs text-gray-200">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Superpower & Advice -->
+            <div class="glass-panel p-4 rounded-3xl border border-white/15 space-y-3">
+                <div class="flex items-center gap-2.5 border-b border-white/10 pb-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-sky-400/20 border border-sky-400/30 flex items-center justify-center text-sky-300 text-lg shrink-0">
+                        ⚡
+                    </div>
+                    <div>
+                        <h3 class="font-jp-rounded text-sm font-bold text-white">きみの英語スーパーパワー</h3>
+                        <p class="text-[10px] text-gray-300">レプトンの授業で輝く強み！</p>
+                    </div>
+                </div>
+                <div id="superpowerContainer" class="p-3 rounded-xl bg-sky-400/10 border border-sky-400/25 text-sky-200 text-xs font-bold flex items-start gap-2">
+                    <i class="fa-solid fa-trophy text-amber-400 text-sm mt-0.5 shrink-0"></i>
+                    <span id="superpowerText">スーパーパワーテキスト...</span>
+                </div>
+                
+                <div class="pt-1">
+                    <h4 class="text-xs font-bold text-amber-300 mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-lightbulb"></i> おすすめの学習アドバイス
+                    </h4>
+                    <ul id="winnerTipsList" class="space-y-2 text-xs text-gray-200">
+                        <!-- Populated by JS -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Action Buttons Footer -->
+            <div class="flex flex-col gap-2.5 pt-1 safe-bottom">
+                <button onclick="restartQuiz()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-sky-600 to-indigo-600 active:scale-95 text-white font-jp-rounded font-bold text-base shadow-lg shadow-sky-600/30 transition flex items-center justify-center gap-2 border border-white/20">
+                    <i class="fa-solid fa-rotate-right text-xs"></i>
+                    <span>もう一度診断する</span>
+                </button>
+                <button onclick="copyShareCard()" class="w-full py-3 rounded-2xl bg-white/10 active:bg-white/20 border border-white/15 text-white font-jp-rounded font-bold text-sm transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-share-nodes text-amber-400 text-xs"></i>
+                    <span>診断結果をコピーする</span>
+                </button>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Modal: Explore All 16 Animals -->
+    <div id="animalsModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel border border-white/20 rounded-3xl w-full max-w-md max-h-[80vh] flex flex-col shadow-2xl">
+            <!-- Header -->
+            <div class="p-4 border-b border-white/10 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🐾</span>
+                    <div>
+                        <h3 class="font-jp-rounded text-base font-bold text-white">レプトンどうぶつ全16タイプ</h3>
+                        <p class="text-[10px] text-sky-300 font-semibold">スクロールして全員のタイプを見てみよう！</p>
+                    </div>
+                </div>
+                <button onclick="toggleAllAnimalsModal()" class="text-gray-400 active:text-white text-lg p-1.5" aria-label="閉じる">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Grid Content -->
+            <div id="allAnimalsGrid" class="p-3 overflow-y-auto space-y-2.5">
+                <!-- Dynamically populated -->
+            </div>
+
+            <div class="p-3 border-t border-white/10 text-right bg-slate-950/80">
+                <button onclick="toggleAllAnimalsModal()" class="w-full py-2.5 bg-sky-600 active:bg-sky-500 text-white text-xs font-bold rounded-xl shadow-md">
+                    とじる
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[90%] max-w-xs bg-slate-800 text-white px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none z-50 flex items-center gap-2 border border-sky-400/40">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-sm shrink-0"></i>
+        <span id="toastMsg" class="truncate">メッセージ</span>
+    </div>
+
+    <script>
+        /* ==========================================================================
+           1. 16 REALISTIC JAPANESE LEPTON ANIMAL PERSONAS
+           ========================================================================== */
+
+        const animalPersonas = {
+            lion: {
+                id: 'lion',
+                name: 'ギリギリライオン',
+                emoji: '🦁',
+                tagline: 'スピーチコンテストの大物！予習動画はいつも教室に入る直前にチェック！',
+                superpower: '本番の度胸！直前まで準備していなくても、先生の前では堂々と大きな声で話せる！',
+                traits: [
+                    "📱 教室に入る直前に「英会話予習映像」をあわててチェックする",
+                    "🦁 先生のデスクチェックでは自信満々の大きな声で発音！",
+                    "⏱️ ギリギリの緊張感があるとスペリングテストで本領発揮する",
+                    "🏆 年に一度のスピーチコンテストでは舞台で一番輝く大物",
+                    "😅 宿題の単語練習は先生に見せる10分前まで手をつけないことも"
+                ],
+                tips: [
+                    "宿題の単語書き取りは、一気にやらず毎日2文字ずつ書くとさらに無敵になれるよ！",
+                    "デスクチェックで見せるそのかっこいい声を、毎回の授業でキープしよう！"
+                ]
+            },
+            penguin: {
+                id: 'penguin',
+                name: 'パーフェクトペンギン',
+                emoji: '🐧',
+                tagline: '超・完璧主義！文字の形が気に入らないとノートが破れるまで消す！',
+                superpower: '圧倒的なていねいさ！テキストやノートの文字の綺麗さはクラスNo.1！',
+                traits: [
+                    "✏️ 線のからはみ出しが気になり、同じ文字を4回消しゴムで消す",
+                    "😬 先生のデスクに行く前に、心の中で音声を5回唱えて練習する",
+                    "💯 毎回の授業の終わりの「復習プリント」はほぼ満点！",
+                    "📄 消しゴムを強くかけすぎて、テキストの紙が破れそうになったことがある",
+                    "❄️ 聞いたことのない単語が出てくると「間違えたらどうしよう」と固まる"
+                ],
+                tips: [
+                    "間違えるのは上手になっている証拠！消しゴムは1回だけにして次に進んでみよう！",
+                    "2ページ終わったら、完璧じゃなくてもすぐに先生のデスクへGO！"
+                ]
+            },
+            fox: {
+                id: 'fox',
+                name: 'スピードキツネ',
+                emoji: '🦊',
+                tagline: '爆速リーダー！知らない単語もなんとかノリで読んで突き進む！',
+                superpower: '止まらないスピード！2ページを誰よりも速く読み切るリスニング＆読解力！',
+                traits: [
+                    "💨 2ページの課題が終わると、風のように先生のデスクへ向かう",
+                    "🦊 知らない単語が出てきても、それっぽい発音でスムーズに読み切る",
+                    "🎧 iPadの音声は集中して倍速レベルのスピードで聞き取る",
+                    "📝 急いで書きすぎて、ピリオドや小文字の指定を飛ばしがち",
+                    "🏃 次のレベルのテキストに進むのが誰よりも楽しみ！"
+                ],
+                tips: [
+                    "デスクチェックの時は、ピリオドのところで「1秒お休み」を入れてみよう！",
+                    "ノートの単語練習は、スペルが合っているか提出前にもう一度チェックしよう！"
+                ]
+            },
+            goat: {
+                id: 'goat',
+                name: '文法ヤギ',
+                emoji: '🐐',
+                tagline: 'ルールチェックの達人！小文字・ピリオドの付け忘れは見逃さない！',
+                superpower: 'ルール分析力！文法やスペルの規則をだれよりも正確に理解できる！',
+                traits: [
+                    "🔍 大文字・小文字、ピリオドの打ち忘れを絶対に見逃さない",
+                    "💯 毎回の復習プリントは、完璧な文法で毎回ハイスコア！",
+                    "📚 単語を書く前に、頭の中で文の仕組みをしっかり理解している",
+                    "🤓 テキストのミスプリントをたまに見つけて先生を驚かせる",
+                    "😅 考えすぎて簡単な質問に時間がかかってしまうことも"
+                ],
+                tips: [
+                    "せっかくルールが頭に入っているから、デスクチェックでもっと大きな声で話してみよう！",
+                    "スピーチコンテストでは文法を気にしすぎず、気持ちを込めて話すのがコツ！"
+                ]
+            },
+            sloth: {
+                id: 'sloth',
+                name: 'じっくりナマケモノ',
+                emoji: '🦥',
+                tagline: 'iPad音声の聞き取りマスター！静かだけど耳の良さは本物！',
+                superpower: '深いリスニング力！iPadのヘッドホンからの音声を完璧に聞き取れる！',
+                traits: [
+                    "🎧 ヘッドホンをつけてiPadの音声の世界にじっくり没頭する",
+                    "🤐 先生のデスクチェックでは、ささやくような優しい声で読む",
+                    "⏳ 質問されてから答えるまでに、10秒くらいじっくり考える",
+                    "🎯 リスニング問題の正解率はクラス最高レベル！",
+                    "🛌 おとなしそうに見えて、頭の中では英語をすごく深く理解している"
+                ],
+                tips: [
+                    "先生チェックの時は、あと「半音だけ」声を大きくしてみよう！先生が喜ぶよ！",
+                    "耳がすごく良いから、真似して発音するとNativeみたいな綺麗な英語になるよ！"
+                ]
+            },
+            dolphin: {
+                id: 'dolphin',
+                name: '辞書イルカ',
+                emoji: '🐬',
+                tagline: '単語コレクター！新しい単語をノートに書くのがとにかく大好き！',
+                superpower: '圧倒的語彙力！難しい単語もどんどん吸収して覚えていく！',
+                traits: [
+                    "📘 宿題の単語ノートに、新しい英語をびっしり綺麗に書く",
+                    "🐬 2ページのデスクチェックで、習ったばかりのかっこいい単語を使ってみる",
+                    "📱 予習動画に出てくる新しい表現を見つけるのが楽しみ",
+                    "🌟 2週間に1回のスペリングテストは余裕の満点！",
+                    "😅 難しい単語に夢中になって、簡単な文のピリオdを忘れることも"
+                ],
+                tips: [
+                    "覚えた単語を使って、先生に1つ英語で質問してみよう！",
+                    "知っている単語が増えたら、スピーチコンテストで自分の言葉として使ってみよう！"
+                ]
+            },
+            cheetah: {
+                id: 'cheetah',
+                name: 'おしゃべりチーター',
+                emoji: '🐆',
+                tagline: '爆速ページツリー！2ページ終わったら即デスクへダッシュ！',
+                superpower: '圧倒的な推進力！どんどんテキストを進めて達成感を味わう天才！',
+                traits: [
+                    "⚡ 2ページ終わったら一瞬で立ち上がり、先生のデスクへダッシュ！",
+                    "🚀 次のテキスト、次のレベルへ早く進みたくてウズウズしている",
+                    "📝 急ぎすぎて単語と単語の間のスペースをあけ忘れることがある",
+                    "🎉 復習プリントに「合格スタンプ」をもらう瞬間が大好き",
+                    "💨 先生のデスク前で順番待ちをするのがちょっと苦手"
+                ],
+                tips: [
+                    "デスクチェックの前に、自分の書いた文字を1回だけ見直すと完璧になるよ！",
+                    "復習プリントの時は、あせらずていねいに書くと100点連発できる！"
+                ]
+            },
+            owl: {
+                id: 'owl',
+                name: '深読みフクロウ',
+                emoji: '🦉',
+                tagline: 'ストーリー探偵！テキストの会話やイラストの意味を深掘り！',
+                superpower: '物語理解力！会話の場面やキャラクターの気持ちを深く読み解ける！',
+                traits: [
+                    "📖 テキストのイラストの細かい背景までじっくり観察する",
+                    "🤔 予習動画のストーリーが「なぜそうなるのか」を深掘りして考える",
+                    "💬 スピーチコンテストでは感情を込めた演技派スピーチができる",
+                    "❓ 先生のデスクチェックで「この言葉ってどういう意味？」と質問する",
+                    "🦉 考えすぎて、復習プリントの時間がギリギリになることも"
+                ],
+                tips: [
+                    "スペリングテストの時は、直感を信じてサッと書くと良い結果が出るよ！",
+                    "物語を理解する力はピカイチだから、スピーチや音読でその感情を爆発させよう！"
+                ]
+            },
+            mouse: {
+                id: 'mouse',
+                name: 'きっちりマウス',
+                emoji: '🐭',
+                tagline: 'ノートの綺麗さNo.1！鉛筆の濃さも揃えて静かに満点を取る！',
+                superpower: '超・コツコツ力！誰に見せても恥ずかしくない綺麗なノート作り！',
+                traits: [
+                    "✏️ 単語ノートの鉛筆の字がいつも手本のように美しい",
+                    "🐭 先生のデスクには足音を立てずに静かに並ぶ",
+                    "📋 毎回の復習プリントの指示を完璧に守って答える",
+                    "🤫 iPadの音声学習中は一度もよそ見をせずに集中",
+                    "🫣 突然大きな声で指指されると、テキストで顔を隠したくなる"
+                ],
+                tips: [
+                    "きみのノートは本当に素晴らしい！自信を持って大きな声で発表しよう！",
+                    "最後のファイナルチェックも、普段通りのきみなら絶対大丈夫！"
+                ]
+            },
+            macaw: {
+                id: 'macaw',
+                name: 'ものまねインコ',
+                emoji: '🦜',
+                tagline: '発音コピーの天才！iPadの音声をそのままのイントネーションで再現！',
+                superpower: '耳と発音のリンク！Nativeのイントネーションやリズムを即座に口すさめる！',
+                traits: [
+                    "🎧 iPadの音声の話し方やリズムをそのまま完璧に真似して読む",
+                    "🦜 2ページのデスクチェックで、Nativeみたいな自然な発音を披露",
+                    "🎶 フォニックスの歌やリズムに乗って楽しそうに発音する",
+                    "🏆 スピーチコンテストでは「発音が凄すぎる！」と褒められる",
+                    "😅 発音の真似が得意すぎて、単語のスペルを書き忘れることも"
+                ],
+                tips: [
+                    "素晴らしい発音に加えて、単語のスペルも鉛筆でしっかり指差し確認しよう！",
+                    "スピーチコンテストでは自信を持って堂々と発表すれば優勝間違いなし！"
+                ]
+            },
+            armadillo: {
+                id: 'armadillo',
+                name: 'ひかえめアルマジロ',
+                emoji: '🦔',
+                tagline: '謙虚な実力者！間違えるのが怖いけど、テストはいつもほぼ満点！',
+                superpower: '堅実な正確さ！間違えたくない気持ちが、高い集中力と正確さを生む！',
+                traits: [
+                    "🙈 クラスみんなの前で発表するのはちょっと恥ずかしい",
+                    "💯 2週間に1回のスペリングテストは密かに高得点を叩き出す",
+                    "🦔 先生の2ページチェックに行く時、毎回ちょっとドキドキする",
+                    "📄 宿題の単語書き取りは、お家でコツコツていねいに仕上げてくる",
+                    "🌟 テキスト終了時のファイナルチェックも見事に一発合格！"
+                ],
+                tips: [
+                    "きみの英語はすごく正確！間違えても先生は味方だから安心してね！",
+                    "2ページ終わったら「できたよ！」の気持ちで胸を張ってデスクに行こう！"
+                ]
+            },
+            bear: {
+                id: 'bear',
+                name: 'なんとなくクマ',
+                emoji: '🐻',
+                tagline: 'おおらか読解派！細かい単語を知らなくても全体の意味を掴む！',
+                superpower: '全体把握力！知らない言葉があっても動じず、大体の流れを理解できる！',
+                traits: [
+                    "🐻 先生のデスクチェックでも緊張せず、ゆったり構えている",
+                    "🖼️ イラストや前後関係から、テキストの意味をなんとなく正しく掴む",
+                    "📱 家での予習動画もリラックスして楽しく観ている",
+                    "😴 スペリングテストの前でも焦らずマイペース",
+                    "🐾 たまに筆箱の中に削った鉛筆が入っていないことがある"
+                ],
+                tips: [
+                    "単語を書くときは、文字の順番（スペル）を最後にもう1回確認してみよう！",
+                    "その落ち着いた雰囲気は、スピーチコンテストの舞台で大きな強みになるよ！"
+                ]
+            },
+            tiger: {
+                id: 'tiger',
+                name: '直訳トラ',
+                emoji: '🐯',
+                tagline: '日英ブリッジ！英語を頭の中で日本語にしっかり直訳して理解！',
+                superpower: '確かな翻訳力！一文一文の意味をあやふやにせずきっちり理解！',
+                traits: [
+                    "🌉 英語を聞いたり読んだりすると、頭の中で一度日本語に直訳する",
+                    "📱 予習動画の会話も「日本語だとどういう意味か」を意識して観る",
+                    "📝 復習プリントは意味をかみしめながら慎重に書いていく",
+                    "🐯 単語のペア（英語と日本語）をしっかりセットで覚える",
+                    "⏳ 直訳するのに少し時間がかかり、デスクチェックで間があくことも"
+                ],
+                tips: [
+                    "iPadの音声を聞くときは、直訳せずに音のままイメージする練習もしてみよう！",
+                    "言葉の意味を深く分かっているから、英文を書く力は抜群だよ！"
+                ]
+            },
+            hedgehog: {
+                id: 'hedgehog',
+                name: 'てれやハリネズミ',
+                emoji: '🦔',
+                tagline: '慎重派の努力家！提出前に何度もノートを見直して確実にする！',
+                superpower: '慎重な確認力！見落としを防ぎ、着実に合格を積み重ねる力！',
+                traits: [
+                    "🦔 デスクに行く前に、自分のノートの書き間違いがないか3回見直す",
+                    "🤫 先生と1対1で話せる2ページチェックの時間が実は一番好き",
+                    "🎧 iPadの音声は集中して静かに聞き漏らさないようにする",
+                    "📊 2ページチェックをパスするたびに、静かに心の中でガッツポーズ",
+                    "😅 復習プリント中に話しかけられるとハリを立てたくなる"
+                ],
+                tips: [
+                    "確認ができるのは素晴らしい強み！「これでよし！」と思ったらすぐデスクへ行こう！",
+                    "先生はきみが頑張っているのをいつでも応援しているよ！"
+                ]
+            },
+            elephant: {
+                id: 'elephant',
+                name: 'たよりになるゾウ',
+                emoji: '🐘',
+                tagline: '記憶の巨人！3冊前のテキストで習った単語もずーっと覚えている！',
+                superpower: '驚異の長期記憶！過去に習った単語や文法を忘れずに蓄積できる！',
+                traits: [
+                    "🐘 半年前に終わったテキストの単語もバッチリ覚えている",
+                    "🚶 どっしり安定したペースで、毎回の2ページチェックをクリア",
+                    "📘 宿題の単語ノート書き取りも文句を言わずコツコツこなす",
+                    "🏆 テキスト終了時のファイナルチェックは高得点で卒業",
+                    "🐢 派手なアピールはしないけれど、一番確実にレベルアップしていく"
+                ],
+                tips: [
+                    "覚えている単語がたくさんあるから、スピーチコンテストで色んな表現を使ってみよう！",
+                    "その調子でコツコツ進めば、どんどん上のレベルのテキストへ行けるよ！"
+                ]
+            },
+            dog: {
+                id: 'dog',
+                name: '脱線ワンコ',
+                emoji: '🐶',
+                tagline: '予習動画ファン！楽しいことが大好きで先生とのおしゃべりも弾む！',
+                superpower: '陽気なコミュニケーション！英語のレッスンを心から楽しむ明るいエネルギー！',
+                traits: [
+                    "🐶 先生のデスクに行くと、嬉しくてついつい笑顔でおしゃべりしちゃう",
+                    "📱 「英会話予習映像」を観るのが大好きでノリノリで予習する",
+                    "🎧 iPadのチャンツ（リズム音声）に合わせて体が動いてしまう",
+                    "🎈 筆箱の中の珍しい消しゴムや教科書の端の落書きに気を取られがち",
+                    "📣 スピーチコンテストでは表情豊かな素晴らしい発表ができる"
+                ],
+                tips: [
+                    "単語の書き取りをするときは「3分間だけ全集中！」とタイマーをセットしてみよう！",
+                    "その明るい笑顔と表現力は、英語を話す上で最高の武器だよ！"
+                ]
+            }
+        };
+
+        /* ==========================================================================
+           2. 8 REALISTIC JAPANESE LEPTON WORKFLOW QUESTIONS
+           ========================================================================== */
+
+        const quizQuestions = [
+            {
+                id: 1,
+                category: "2ページごとのデスクチェック",
+                title: "テキストが2ページ終わって、先生のデスクにチェックしに行くとき、きみはどんな感じ？",
+                options: [
+                    {
+                        text: "「できたー！」と元気いっぱいにデスクに行って、大きな声で読む！",
+                        weights: { lion: 4, cheetah: 2, fox: 1 }
+                    },
+                    {
+                        text: "間違いや消し忘れがないか、手元をしっかり見直してから静かに向かう。",
+                        weights: { penguin: 4, mouse: 3, armadillo: 1 }
+                    },
+                    {
+                        text: "iPadで聞いたNativeの音声をそのまま真似してかっこよく読む！",
+                        weights: { macaw: 4, fox: 2, dolphin: 1 }
+                    },
+                    {
+                        text: "ちょっと緊張してドキドキするけど、小さな声でていねいに読む。",
+                        weights: { armadillo: 4, sloth: 3, hedgehog: 2 }
+                    }
+                ]
+            },
+            {
+                id: 2,
+                category: "iPadでのリスニング学習",
+                title: "iPadでヘッドホンをつけて音声を聞くとき、きみの学習スタイルは？",
+                options: [
+                    {
+                        text: "静かにじっくり集中して聞き取って、落ち着いて問題に答える。",
+                        weights: { sloth: 4, owl: 2, hedgehog: 2 }
+                    },
+                    {
+                        text: "聞こえてきた英語の音声を、すぐに声に出して真似（マネ）する！",
+                        weights: { macaw: 4, fox: 2, dog: 1 }
+                    },
+                    {
+                        text: "どんどん進めたいから、爆速で聞き取ってどんどんタップする！",
+                        weights: { cheetah: 4, lion: 2, fox: 1 }
+                    },
+                    {
+                        text: "イラストや場面を見ながら「こういう意味かな？」とイメージして聞く。",
+                        weights: { bear: 4, dog: 2, owl: 1 }
+                    }
+                ]
+            },
+            {
+                id: 3,
+                category: "宿題：ノートへの単語練習",
+                title: "お家で単語ノートに新しい英語を鉛筆で書く宿題をやるときは？",
+                options: [
+                    {
+                        text: "文字の形やマス目からはみ出さないように、超きれいに書く！",
+                        weights: { mouse: 4, penguin: 3, armadillo: 1 }
+                    },
+                    {
+                        text: "教室に行く直前や、やる時間がギリギリになってあわてて書く！😅",
+                        weights: { lion: 4, dog: 2, cheetah: 1 }
+                    },
+                    {
+                        text: "「新しい単語を覚えるぞ！」とワクワクしながらどんどん書く！",
+                        weights: { dolphin: 4, tiger: 2, elephant: 1 }
+                    },
+                    {
+                        text: "日本語の意味を頭の中で「これはこういう意味だな」と確認しながら書く。",
+                        weights: { tiger: 4, goat: 2, owl: 1 }
+                    }
+                ]
+            },
+            {
+                id: 4,
+                category: "隔週のスペリングテスト",
+                title: "2週間に1回の「単語・スペリングテスト」のときのきみは？",
+                options: [
+                    {
+                        text: "大文字・小文字、スペルのルールを完璧に思い出して正確に書く！",
+                        weights: { goat: 4, elephant: 2, tiger: 1 }
+                    },
+                    {
+                        text: "過去に覚えた単語の記憶を呼び起こして、スラスラ書けちゃう！",
+                        weights: { elephant: 4, dolphin: 2, lion: 1 }
+                    },
+                    {
+                        text: "ちょっと間違えるのが怖いから、何度も見直して慎重に書く。",
+                        weights: { armadillo: 4, hedgehog: 3, penguin: 1 }
+                    },
+                    {
+                        text: "あせらずマイペースに、分かるところからどんどん埋めていく。",
+                        weights: { bear: 3, dog: 2, sloth: 2 }
+                    }
+                ]
+            },
+            {
+                id: 5,
+                category: "毎回の「復習プリント」",
+                title: "レッスン最後の「復習プリント」をやるときの様子は？",
+                options: [
+                    {
+                        text: "ピリオドの打ち忘れやスペルミスがないか、最後の一文字まで吟味する。",
+                        weights: { goat: 4, owl: 2, mouse: 1 }
+                    },
+                    {
+                        text: "一刻も早く終わらせて、合格スタンプをもらって帰りたい！",
+                        weights: { cheetah: 4, lion: 2, dog: 1 }
+                    },
+                    {
+                        text: "英語の文を頭の中で「日本語だとこうだな」と直訳しながら解く。",
+                        weights: { tiger: 4, dolphin: 2, goat: 1 }
+                    },
+                    {
+                        text: "間違えないように静かに集中して、自分のペースで解いていく。",
+                        weights: { hedgehog: 4, sloth: 2, armadillo: 1 }
+                    }
+                ]
+            },
+            {
+                id: 6,
+                category: "宿題：英会話予習映像",
+                title: "お家でスマホやタブレットで「英会話予習映像」を観るときは？",
+                options: [
+                    {
+                        text: "動画に出てくるキャラクターの会話やストーリーをじっくり楽しむ！",
+                        weights: { owl: 4, dog: 2, bear: 1 }
+                    },
+                    {
+                        text: "登場人物の発音やフレーズを、画面の前で声に出して真似してみる！",
+                        weights: { macaw: 4, fox: 2, dolphin: 1 }
+                    },
+                    {
+                        text: "レッスン直前になって「あ！観るの忘れてた！」とあわてて再生する！",
+                        weights: { lion: 4, dog: 2, cheetah: 1 }
+                    },
+                    {
+                        text: "次の授業でスムーズに答えられるように、真面目にしっかり予習する。",
+                        weights: { mouse: 3, goat: 3, elephant: 2 }
+                    }
+                ]
+            },
+            {
+                id: 7,
+                category: "ファイナルチェック（テキスト終了）",
+                title: "1冊のテキストが終わる最後の「ファイナルチェック」のときは？",
+                options: [
+                    {
+                        text: "「ついに終わったぞー！」と達成感いっぱいで堂々とクリアする！",
+                        weights: { lion: 4, elephant: 3, cheetah: 1 }
+                    },
+                    {
+                        text: "この1冊で覚えたたくさんの単語が頭に入っているから余裕！",
+                        weights: { elephant: 4, dolphin: 2, goat: 1 }
+                    },
+                    {
+                        text: "緊張しないようにリラックスして、いつも通りの力でクリアする。",
+                        weights: { bear: 4, sloth: 2, macaw: 1 }
+                    },
+                    {
+                        text: "絶対に1発合格したいから、過去ページをもう一度見直して挑む！",
+                        weights: { penguin: 3, hedgehog: 3, armadillo: 2 }
+                    }
+                ]
+            },
+            {
+                id: 8,
+                category: "年に一度のスピーチコンテスト",
+                title: "年に一度の「スピーチコンテスト」の練習や本番のときは？",
+                options: [
+                    {
+                        text: "大きな身振り手振りと堂々とした声で、舞台の主役になる！",
+                        weights: { lion: 4, fox: 2, dog: 1 }
+                    },
+                    {
+                        text: "iPadで聞いたような本物そっくりのNative発音でみんなを驚かせる！",
+                        weights: { macaw: 4, dolphin: 2, owl: 1 }
+                    },
+                    {
+                        text: "本番はドキドキするけど、家で何回も練習した成果をしっかり出す！",
+                        weights: { armadillo: 4, hedgehog: 3, mouse: 1 }
+                    },
+                    {
+                        text: "スピーチの原稿に気持ちを込めて、感情豊かに表現する！",
+                        weights: { owl: 3, bear: 3, dog: 1 }
+                    }
+                ]
+            }
+        ];
+
+        /* ==========================================================================
+           3. STATE MANAGEMENT & QUIZ ENGINE
+           ========================================================================== */
+
+        let currentQuestionIndex = 0;
+        let userAnswers = new Array(quizQuestions.length).fill(null);
+
+        function startQuiz() {
+            document.getElementById('landingScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+            currentQuestionIndex = 0;
+            userAnswers = new Array(quizQuestions.length).fill(null);
+            renderQuestion();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetToLanding() {
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('landingScreen').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderQuestion() {
+            const q = quizQuestions[currentQuestionIndex];
+            
+            const currentNum = currentQuestionIndex + 1;
+            const totalNum = quizQuestions.length;
+            const percent = Math.round((currentNum / totalNum) * 100);
+
+            document.getElementById('questionProgressText').innerText = `質問 ${currentNum} / ${totalNum}`;
+            document.getElementById('questionPercentText').innerText = `${percent}%`;
+            document.getElementById('progressBar').style.width = `${percent}%`;
+
+            document.getElementById('questionCategory').innerText = q.category;
+            document.getElementById('questionTitle').innerText = q.title;
+
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const isSelected = userAnswers[currentQuestionIndex] === idx;
+                const card = document.createElement('div');
+                card.className = `option-card p-3.5 rounded-2xl glass-card text-left flex items-start space-x-3 border-2 cursor-pointer ${isSelected ? 'selected' : 'border-white/10'}`;
+                card.onclick = () => selectOption(idx);
+
+                card.innerHTML = `
+                    <div class="w-7 h-7 rounded-lg flex items-center justify-center font-jp-rounded font-bold text-xs shrink-0 ${isSelected ? 'bg-sky-500 text-white shadow' : 'bg-white/10 text-amber-300'}">
+                        ${String.fromCharCode(65 + idx)}
+                    </div>
+                    <div class="text-xs md:text-sm text-gray-100 font-bold leading-snug">
+                        ${opt.text}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            document.getElementById('prevBtn').disabled = currentQuestionIndex === 0;
+            document.getElementById('nextBtn').disabled = userAnswers[currentQuestionIndex] === null;
+
+            if (currentQuestionIndex === totalNum - 1) {
+                document.getElementById('nextBtn').innerHTML = `<span>結果を見る！</span> <i class="fa-solid fa-trophy text-amber-300 text-xs"></i>`;
+            } else {
+                document.getElementById('nextBtn').innerHTML = `<span>つぎへ</span> <i class="fa-solid fa-arrow-right text-xs"></i>`;
+            }
+        }
+
+        function selectOption(optionIndex) {
+            userAnswers[currentQuestionIndex] = optionIndex;
+            renderQuestion();
+        }
+
+        function nextQuestion() {
+            if (userAnswers[currentQuestionIndex] === null) return;
+
+            if (currentQuestionIndex < quizQuestions.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion();
+            } else {
+                calculateAndShowResults();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                renderQuestion();
+            }
+        }
+
+        /* ==========================================================================
+           4. SCORING & RESULT ENGINE (REMOVED TOP MATCHES GRAPH AS REQUESTED)
+           ========================================================================== */
+
+        function calculateAndShowResults() {
+            const scores = {};
+            Object.keys(animalPersonas).forEach(key => scores[key] = 0);
+
+            userAnswers.forEach((selectedOptIndex, qIndex) => {
+                if (selectedOptIndex !== null) {
+                    const optionWeights = quizQuestions[qIndex].options[selectedOptIndex].weights;
+                    Object.entries(optionWeights).forEach(([animalKey, weight]) => {
+                        if (scores[animalKey] !== undefined) {
+                            scores[animalKey] += weight;
+                        }
+                    });
+                }
+            });
+
+            const sorted = Object.keys(scores)
+                .map(key => ({
+                    key,
+                    score: scores[key],
+                    persona: animalPersonas[key]
+                }))
+                .sort((a, b) => b.score - a.score);
+
+            const winner = sorted[0];
+
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 120,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+            }
+
+            document.getElementById('winnerEmoji').innerText = winner.persona.emoji;
+            document.getElementById('winnerName').innerText = winner.persona.name;
+            document.getElementById('winnerTagline').innerText = winner.persona.tagline;
+            document.getElementById('superpowerText').innerText = winner.persona.superpower;
+
+            const fitPercentage = Math.min(99, Math.max(78, Math.round((winner.score / 16) * 100)));
+            document.getElementById('winnerMatchPercentage').innerText = `⭐ ぴったり度 ${fitPercentage}%`;
+
+            // Traits Grid
+            const traitsGrid = document.getElementById('winnerTraitsGrid');
+            traitsGrid.innerHTML = winner.persona.traits.map(trait => `
+                <div class="flex items-center gap-2 bg-white/5 p-2 rounded-xl border border-white/10 text-[11px]">
+                    <span>${trait}</span>
+                </div>
+            `).join('');
+
+            // Tips List
+            const tipsList = document.getElementById('winnerTipsList');
+            tipsList.innerHTML = winner.persona.tips.map(tip => `
+                <li class="flex items-start gap-2 bg-sky-500/10 p-2.5 rounded-xl border border-sky-500/20 text-[11px]">
+                    <i class="fa-solid fa-star text-amber-300 text-xs mt-0.5 shrink-0"></i>
+                    <span class="font-bold text-indigo-100">${tip}</span>
+                </li>
+            `).join('');
+
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function restartQuiz() {
+            startQuiz();
+        }
+
+        /* ==========================================================================
+           5. ALL ANIMALS DIRECTORY MODAL & UTILITIES
+           ========================================================================== */
+
+        function toggleAllAnimalsModal() {
+            const modal = document.getElementById('animalsModal');
+            if (modal.classList.contains('hidden')) {
+                renderAllAnimalsDirectory();
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function renderAllAnimalsDirectory() {
+            const grid = document.getElementById('allAnimalsGrid');
+            grid.innerHTML = Object.values(animalPersonas).map(animal => `
+                <div class="glass-card p-3 rounded-2xl border border-white/10 flex items-center space-x-2.5">
+                    <div class="text-2xl p-2 bg-white/10 rounded-xl border border-white/10 shrink-0">${animal.emoji}</div>
+                    <div class="space-y-0.5 text-[11px] overflow-hidden">
+                        <h4 class="font-jp-rounded text-xs font-bold text-white truncate">${animal.name}</h4>
+                        <p class="text-sky-300 font-semibold truncate">${animal.tagline}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function copyShareCard() {
+            const winnerName = document.getElementById('winnerName').innerText;
+            const shareText = `📖 私のレプトンどうぶつタイプは【${winnerName}】でした！🐾 レプトン生タイプ診断をやってみよう！`;
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shareText).then(() => {
+                    showToast("診断結果をコピーしました！");
+                }).catch(() => {
+                    showToast("結果テキストの準備ができました！");
+                });
+            } else {
+                showToast("結果テキストの準備ができました！");
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // Swipe & Touch gesture handlers
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.getElementById('quizScreen').addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        document.getElementById('quizScreen').addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            if (touchStartX - touchEndX > 60) {
+                nextQuestion();
+            } else if (touchEndX - touchStartX > 60) {
+                prevQuestion();
+            }
+        }, { passive: true });
+    </script>
+</body>
+</html>
